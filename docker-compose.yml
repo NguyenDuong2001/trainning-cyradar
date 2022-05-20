@@ -1,0 +1,55 @@
+version: '3.8'
+services:
+  redis:
+    image: redis:latest
+    ports:
+      - 6379:6379 
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    expose:
+      - "6379"
+  db:
+    image: mongo
+    container_name: mongodb
+    ports:
+      - 2717:27017
+  staff:
+    build: ./staff
+    volumes:
+      - ./staff:/app/staff
+    ports:
+      - 3333:3333
+    depends_on:
+      - redis
+      - db
+    environment:
+      URL_MongoDB : "mongodb://db:27017"
+      Redis_Host : "redis:6379"
+      Port : "3333"
+      PortTeam : "http://localhost:3334/"
+  team:
+    build: ./team
+    volumes:
+      - ./team:/app/team
+    ports:
+      - 3334:3334
+    links:
+      - redis:redis
+    depends_on:
+      - redis
+      - db
+    environment:
+      URL_MongoDB : "mongodb://db:27017"
+      Redis_Host : "redis:6379"
+      Port : "3334"
+      PortStaff : "http://localhost:3333/"
+  fe:
+    build: ./staff-team
+    volumes:
+      - ./staff-team:/app/staff-team
+    ports:
+      - 8080:8080
+    depends_on:
+      - staff
+      - team
