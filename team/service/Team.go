@@ -30,7 +30,7 @@ func GetATeamDB(id uuid.UUID, database config.Database) model.TeamInter {
 func GetNameTeamDB(id uuid.UUID, database config.Database) model.TeamInter {
 	var team model.TeamInter
 	team = Cache.GetTeam(id)
-	log.Print("Get A Team",id, team);
+	log.Print("Get A Team ",id, team);
 	if team.Name == "" {
 		log.Print("In if")
 		team = database.FindNameTeam(id)

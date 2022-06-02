@@ -16,7 +16,7 @@ import (
 
 var client = redis.NewRedisCache(os.Getenv("Redis_Host"), 0, 10).GetClient()
 
-func (DB *MongoDB) FindStaff() []model.StaffInter {
+func (DB *MongoDB) FindStaff(toEdit bool)[]model.StaffInter {
 	var staffs []model.StaffInter
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -32,7 +32,7 @@ func (DB *MongoDB) FindStaff() []model.StaffInter {
 		}
 		var staffInter model.StaffInter
 		var teams []string
-		if len(staff.Team) > 0 {
+		if len(staff.Team) > 0 && !toEdit {
 			teams = GetNameTeams(staff.Team)
 		}
 		staffInter.ID = staff.ID
@@ -151,21 +151,24 @@ func (M *MongoDB) PushTeam(idTeam uuid.UUID, idStaff uuid.UUID) {
 
 func GetNameTeams(teams []uuid.UUID) []string {
 	var team []string
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 	var data model.DataInter
 	data.Option = "ReqGetTeam"
 	data.Data = teams
 	jsonData, _ := json.Marshal(data)
-	err := client.RPush(ctx, "Staff_Team", jsonData).Err()
+	//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	//defer cancel()
+	//err := client.RPush(ctx, "Staff_Team", jsonData).Err()
+	err := client.RPush("Staff_Team", jsonData).Err()
 	if err != nil {
 		log.Fatal(err)
 	}
 	for range time.Tick(500 * time.Microsecond) {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
+		//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		//defer cancel()
+		//jsonD, _ := client.BLPop(ctx, 5*time.Second, "ReturnNameTeam").Result()
+		jsonD, _ := client.BLPop(5*time.Second, "ReturnNameTeam").Result()
+
 		// log.Print(client)
-		jsonD, _ := client.BLPop(ctx, 5*time.Second, "ReturnNameTeam").Result()
 		// if err != nil {
 		// 	log.Fatal("err",err)
 		// }

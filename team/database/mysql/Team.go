@@ -3,7 +3,6 @@ package mysql
 import (
 	"Basic/Trainning4/redis/team/model"
 	"Basic/Trainning4/redis/team/redis"
-	"context"
 	"encoding/json"
 	"github.com/google/uuid"
 	"log"
@@ -52,21 +51,21 @@ func (DB *Mysql) FindOneTeam(id uuid.UUID) model.TeamInter {
 		Name: team.Name,
 	}
 	if len(team.Members) > 0 {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		var ids []uuid.UUID
-		for _, m := range team.Members{
-			ids = append(ids,m)
-		}
 		var data model.DataInter
 		data.Option = "GetManyStaff"
-		data.Data = ids
+		data.Data = team.Members
 		jsonData, _ := json.Marshal(data)
-		client.RPush(ctx,"Team_Staff",jsonData)
+		//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		//defer cancel()
+		//client.RPush(ctx,"Team_Staff",jsonData)
+		client.RPush("Team_Staff",jsonData)
+
 		for range time.Tick(500 * time.Microsecond) {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
-			jsonData,_ :=client.BLPop(ctx, 1*time.Second,"ReturnManyStaff").Result()
+			//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			//defer cancel()
+			//jsonData,_ :=client.BLPop(ctx, 1*time.Second,"ReturnManyStaff").Result()
+			jsonData,_ :=client.BLPop(1*time.Second,"ReturnManyStaff").Result()
+
 			if len(jsonData)>0{
 				var data []model.Staff
 				json.Unmarshal([]byte(jsonData[1]),&data)

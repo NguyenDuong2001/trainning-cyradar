@@ -7,7 +7,7 @@ import (
 type Database interface {
 	NewDB()
 	GetName() string
-	FindStaff() []model.StaffInter
+	FindStaff(bool) []model.StaffInter
 	FindOneStaff(uuid.UUID) model.Staff
 	InsertOneStaff(model.Staff)
 	UpdateOneStaff(model.Staff, uuid.UUID)

@@ -8,7 +8,6 @@ import (
 	"Basic/Trainning4/redis/staff/model"
 	"Basic/Trainning4/redis/staff/redis"
 	"Basic/Trainning4/redis/staff/service"
-	"context"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -41,6 +40,7 @@ func main() {
 		//r.Use(CorsMiddleware)
 		r.Use(checkDB)
 		r.Get("/", GetAllStaff)
+		r.Get("/editTeam", GetAllStaffToEdit)
 		r.Get("/Many", GetManyStaff)
 		r.Post("/", CreateStaff)
 		r.Put("/Pull", PullStaff)
@@ -73,9 +73,10 @@ func run() {
 	DB.NewDB()
 	for range time.Tick(500 * time.Microsecond) {
 		go func() {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
-			jsonData, _ := client.BLPop(ctx, 1*time.Second, "Team_Staff").Result()
+			//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			//defer cancel()
+			//jsonData, _ := client.BLPop(ctx, 1*time.Second, "Team_Staff").Result()
+			jsonData, _ := client.BLPop(1*time.Second, "Team_Staff").Result()
 			if len(jsonData) > 0 {
 				var data model.DataInter
 				json.Unmarshal([]byte(jsonData[1]), &data)
@@ -94,7 +95,8 @@ func run() {
 					staffs := service.FindManyStaffDB(dataID, DB)
 					log.Print(staffs)
 					d, _ := json.Marshal(staffs)
-					e := client.RPush(ctx, "ReturnManyStaff", d).Err()
+					//e := client.RPush(ctx, "ReturnManyStaff", d).Err()
+					e := client.RPush("ReturnManyStaff", d).Err()
 					if e != nil {
 						log.Fatal(e)
 					}
@@ -125,7 +127,8 @@ func run() {
 					if e != nil {
 						log.Fatal(e)
 					}
-					client.RPush(ctx, "Database", jsonData)
+					//client.RPush(ctx, "Database", jsonData)
+					client.RPush("Database", jsonData)
 				default:
 					break
 				}
@@ -171,8 +174,6 @@ func choiceDB(w http.ResponseWriter, r *http.Request) {
 	//if err != nil {
 	//	log.Fatal(err)
 	//}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 	var data model.DataInter
 	data.Option = "ChoiceDB"
 	data.Data = choice
@@ -180,7 +181,10 @@ func choiceDB(w http.ResponseWriter, r *http.Request) {
 	if e != nil {
 		log.Fatal(e)
 	}
-	client.RPush(ctx, "Staff_Team", jsonData)
+	//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	//defer cancel()
+	//client.RPush(ctx, "Staff_Team", jsonData)
+	client.RPush("Staff_Team", jsonData)
 	DB.NewDB()
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(200)
@@ -193,15 +197,17 @@ func checkDB(next http.Handler) http.Handler {
 		if DB == nil {
 			var data model.DataInter
 			data.Option = "GetDB"
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
 			jsonData, e := json.Marshal(&data)
 			if e != nil {
 				log.Fatal(e)
 			}
-			client.RPush(ctx, "Staff_Team", jsonData)
+			//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			//defer cancel()
+			//client.RPush(ctx, "Staff_Team", jsonData)
+			client.RPush("Staff_Team", jsonData)
 			for range time.Tick(500 * time.Microsecond) {
-				jsonDB, _ := client.BLPop(ctx, 1*time.Second, "Database").Result()
+				//jsonDB, _ := client.BLPop(ctx, 1*time.Second, "Database").Result()
+				jsonDB, _ := client.BLPop(1*time.Second, "Database").Result()
 				if len(jsonDB) > 0 {
 					var data string
 					json.Unmarshal([]byte(jsonDB[1]), &data)
@@ -230,7 +236,14 @@ func checkDB(next http.Handler) http.Handler {
 }
 
 func GetAllStaff(w http.ResponseWriter, r *http.Request) {
-	staffs := service.GetStaffDB(DB)
+	staffs := service.GetStaffDB(DB, false)
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(200)
+	json.NewEncoder(w).Encode(&staffs)
+}
+
+func GetAllStaffToEdit(w http.ResponseWriter, r *http.Request) {
+	staffs := service.GetStaffDB(DB, true)
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(200)
 	json.NewEncoder(w).Encode(&staffs)

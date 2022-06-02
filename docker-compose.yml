@@ -1,19 +1,28 @@
 version: '3.8'
 services:
   redis:
+    # image: redis:alpine
     image: redis:latest
     ports:
-      - 6379:6379 
-    command: redis-server /usr/local/etc/redis/redis.conf
+      - 6379:6379
+    # expose:
+    #   - 6379
     volumes:
-      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
-    expose:
-      - "6379"
+      - data:/data
+    container_name: cache
+    command: redis-server --save 20 1 --loglevel warning --requirepass 1234
+    networks:
+      - work
   db:
     image: mongo
     container_name: mongodb
+    volumes:
+      - mongodb:/data/db
+      - mongodb_config:/data/configdb
     ports:
       - 2717:27017
+    networks:
+      - work
   staff:
     build: ./staff
     volumes:
@@ -23,33 +32,62 @@ services:
     depends_on:
       - redis
       - db
+    links:
+      - db
+      - redis
     environment:
-      URL_MongoDB : "mongodb://db:27017"
-      Redis_Host : "redis:6379"
-      Port : "3333"
-      PortTeam : "http://localhost:3334/"
+      URL_MongoDB: "mongodb://db:27017"
+      # REDIS_URL: cache:6379
+      REDIS_URL: "cache:6379"
+      Redis_Host: cache:6379
+      REDIS_HOST: "cache"
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: "1234"
+      Port: "3333"
+      PortTeam: "http://localhost:3334/"
+    networks:
+      - work
   team:
     build: ./team
     volumes:
       - ./team:/app/team
     ports:
       - 3334:3334
-    links:
-      - redis:redis
+    # links:
+    #   - redis:redis
     depends_on:
       - redis
       - db
+    links:
+      - db
+      - redis
     environment:
-      URL_MongoDB : "mongodb://db:27017"
-      Redis_Host : "redis:6379"
-      Port : "3334"
-      PortStaff : "http://localhost:3333/"
+      URL_MongoDB: "mongodb://db:27017"
+      # REDIS_URL: cache:6379
+      REDIS_URL: "cache:6379"
+      Redis_Host: cache:6379
+      Port: "3334"
+      REDIS_HOST: "cache"
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: "1234"
+      PortStaff: "http://localhost:3333/"
+    networks:
+      - work
   fe:
     build: ./staff-team
     volumes:
-      - ./staff-team:/app/staff-team
+      - ./staff-team:/app
+      - /app/node_modules
     ports:
       - 8080:8080
     depends_on:
       - staff
       - team
+    networks:
+      - work
+networks:
+  work:
+volumes:
+  mongodb:
+  mongodb_config:
+  data:

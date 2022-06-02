@@ -5,6 +5,7 @@ import (
 	"Basic/Trainning4/redis/team/redis"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"log"
@@ -44,24 +45,27 @@ func (DB *MongoDB) FindOneTeam(id uuid.UUID) model.TeamInter {
 	}
 	log.Println("Find", team)
 	if len(team.Members) > 0 {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		var ids []uuid.UUID
-		for _, m := range team.Members{
-			ids = append(ids,m)
-		}
 		var data model.DataInter
 		data.Option = "GetManyStaff"
-		data.Data = ids
-		jsonData, _ := json.Marshal(data)
-		e := client.RPush(ctx,"Team_Staff",jsonData).Err()
+		data.Data = team.Members
+		jsonData, err := json.Marshal(data)
+		fmt.Println("Find 1", err, jsonData)
+		//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		//defer cancel()
+		fmt.Println(client)
+		//e := client.RPush(ctx,"Team_Staff",jsonData).Err()
+		e := client.RPush("Team_Staff",jsonData).Err()
+
 		if e != nil {
+			fmt.Println("FindOneTeam")
 			log.Fatal(e)
 		}
 		for range time.Tick(500 * time.Microsecond) {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
-			jsonData,_ :=client.BLPop(ctx, 1*time.Second,"ReturnManyStaff").Result()
+			//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			//defer cancel()
+			//jsonData,_ :=client.BLPop(ctx, 1*time.Second,"ReturnManyStaff").Result()
+			jsonData,_ :=client.BLPop(1*time.Second,"ReturnManyStaff").Result()
+
 			if len(jsonData)>0{
 				log.Println("Return Staff",jsonData)
 				var data []model.Staff
@@ -113,9 +117,10 @@ func (DB *MongoDB) InsertOneTeam(team model.Team) {
 		if e != nil {
 			log.Fatal(e)
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		client.RPush(ctx, "Team_Staff", jsonData)
+		//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		//defer cancel()
+		//client.RPush(ctx, "Team_Staff", jsonData)
+		client.RPush("Team_Staff", jsonData)
 
 		//req, _ := http.NewRequest(http.MethodPut, path, bytes.NewBuffer(body))
 		//req.Header.Set("Content-Type", "application/json; charset=utf-8")
@@ -161,9 +166,11 @@ func (DB *MongoDB) UpdateOneTeam(id uuid.UUID, newMembers []uuid.UUID) {
 			if e != nil {
 				log.Fatal(e)
 			}
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
-			client.RPush(ctx, "Team_Staff", jsonData)
+			//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			//defer cancel()
+			//client.RPush(ctx, "Team_Staff", jsonData)
+			client.RPush( "Team_Staff", jsonData)
+
 			//path := fmt.Sprintf(os.Getenv("PortStaff") + "staff/Pull")
 			//body, e := json.Marshal(ids)
 			//if e != nil {
@@ -192,9 +199,11 @@ func (DB *MongoDB) UpdateOneTeam(id uuid.UUID, newMembers []uuid.UUID) {
 			if e != nil {
 				log.Fatal(e)
 			}
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
-			client.RPush(ctx, "Team_Staff", jsonData)
+			//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			//defer cancel()
+			//client.RPush(ctx, "Team_Staff", jsonData)
+			client.RPush( "Team_Staff", jsonData)
+
 			//path := fmt.Sprintf(os.Getenv("PortStaff") + "staff/Push")
 			//body, e := json.Marshal(ids)
 			//if e != nil {
@@ -218,9 +227,11 @@ func (DB *MongoDB) UpdateOneTeam(id uuid.UUID, newMembers []uuid.UUID) {
 			if e != nil {
 				log.Fatal(e)
 			}
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
-			client.RPush(ctx, "Team_Staff", jsonData)
+			//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			//defer cancel()
+			//client.RPush(ctx, "Team_Staff", jsonData)
+			client.RPush("Team_Staff", jsonData)
+
 			//path := fmt.Sprintf(os.Getenv("PortStaff") + "staff/Push")
 			//body, e := json.Marshal(ids)
 			//if e != nil {
@@ -253,7 +264,8 @@ func (DB *MongoDB) DeleteOneTeam(id uuid.UUID) {
 			if e != nil {
 				log.Fatal(e)
 			}
-			client.RPush(ctx, "Team_Staff", jsonData)
+			client.RPush( "Team_Staff", jsonData)
+			//client.RPush(ctx, "Team_Staff", jsonData)
 			//path := fmt.Sprintf(os.Getenv("PortStaff") + "staff/Pull")
 			//body, e := json.Marshal(ids)
 			//if e != nil {

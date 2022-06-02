@@ -3,7 +3,6 @@ package mysql
 import (
 	"Basic/Trainning4/redis/staff/model"
 	"Basic/Trainning4/redis/staff/redis"
-	"context"
 	"encoding/json"
 	"github.com/google/uuid"
 	"log"
@@ -13,7 +12,7 @@ import (
 
 var client = redis.NewRedisCache(os.Getenv("Redis_Host"), 0, 10).GetClient()
 
-func (DB *Mysql) FindStaff() []model.StaffInter {
+func (DB *Mysql) FindStaff(toEdit bool)[]model.StaffInter {
 	var staffs []model.StaffInter
 	data, e := DB.mysql.Query("select * from staffs")
 	defer data.Close()
@@ -60,7 +59,7 @@ func (DB *Mysql) FindStaff() []model.StaffInter {
 			}
 			IDTeams = append(IDTeams, idTeam)
 		}
-		if len(IDTeams) > 0 {
+		if len(IDTeams) > 0 && !toEdit {
 			teams = GetNameTeams(IDTeams)
 		}
 		staffInter.Team = teams
@@ -170,15 +169,17 @@ func (DB *Mysql) DeleteOneStaff(id uuid.UUID) []string {
 
 func GetNameTeams(teams []uuid.UUID) []string {
 	var team []string
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 	var data model.DataInter
 	data.Option = "ReqGetTeam"
 	data.Data = teams
 	jsonData, _ := json.Marshal(data)
-	client.RPush(ctx, "Staff_Team", jsonData)
+	//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	//defer cancel()
+	//client.RPush(ctx, "Staff_Team", jsonData)
+	client.RPush("Staff_Team", jsonData)
 	for range time.Tick(500 * time.Microsecond) {
-		jsonD, _ := client.BLPop(ctx, 5*time.Second, "ReturnNameTeam").Result()
+		//jsonD, _ := client.BLPop(ctx, 5*time.Second, "ReturnNameTeam").Result()
+		jsonD, _ := client.BLPop(5*time.Second, "ReturnNameTeam").Result()
 		if len(jsonD) > 0 {
 			var data model.DataInter
 			json.Unmarshal([]byte(jsonD[1]), &data)

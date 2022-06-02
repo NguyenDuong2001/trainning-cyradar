@@ -10,8 +10,8 @@ import (
 
 var Cache = redis.NewRedisCache(os.Getenv("Redis_Host"), 0, 10)
 
-func GetStaffDB(database config.Database) []model.StaffInter {
-	return database.FindStaff()
+func GetStaffDB(database config.Database, toEdit bool) []model.StaffInter {
+	return database.FindStaff(toEdit)
 }
 
 func GetAStaffDB(id uuid.UUID, database config.Database) model.Staff {

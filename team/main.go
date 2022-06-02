@@ -8,7 +8,6 @@ import (
 	"Basic/Trainning4/redis/team/model"
 	"Basic/Trainning4/redis/team/redis"
 	"Basic/Trainning4/redis/team/service"
-	"context"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -65,9 +64,10 @@ func run() {
 	DB.NewDB()
 	for range time.Tick(500 * time.Microsecond) {
 		go func() {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
-			jsonData, _ := client.BLPop(ctx, 5*time.Second, "Staff_Team").Result()
+			//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			//defer cancel()
+			//jsonData, _ := client.BLPop(ctx, 5*time.Second, "Staff_Team").Result()
+			jsonData, _ := client.BLPop(1*time.Second, "Staff_Team").Result()
 			if len(jsonData) > 0 {
 				var data model.DataInter
 				json.Unmarshal([]byte(jsonData[1]), &data)
@@ -89,11 +89,13 @@ func run() {
 					var dataName model.DataInter
 					dataName.Option = "NameTeam"
 					dataName.Data = name
-					ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
-					defer cancel()
 					jsonD, _ := json.Marshal(dataName)
 					log.Print(dataName)
-					e := client.RPush(ctx, "ReturnNameTeam", jsonD).Err()
+					//ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
+					//defer cancel()
+					//e := client.RPush(ctx, "ReturnNameTeam", jsonD).Err()
+					e := client.RPush("ReturnNameTeam", jsonD).Err()
+
 					if e != nil {
 						log.Print(1)
 						log.Fatal(e)
@@ -122,7 +124,7 @@ func run() {
 					if e != nil {
 						log.Fatal(e)
 					}
-					client.RPush(ctx, "Database", jsonData)
+					client.RPush("Database", jsonData)
 				default:
 					break
 				}
@@ -190,15 +192,18 @@ func checkDB(next http.Handler) http.Handler {
 		if DB == nil {
 			var data model.DataInter
 			data.Option = "GetDB"
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
 			jsonData, e := json.Marshal(&data)
 			if e != nil {
 				log.Fatal(e)
 			}
-			client.RPush(ctx, "Team_Staff", jsonData)
+			//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			//defer cancel()
+			//client.RPush(ctx, "Team_Staff", jsonData)
+			client.RPush("Team_Staff", jsonData)
+
 			for range time.Tick(500 * time.Microsecond) {
-				jsonDB, _ := client.BLPop(ctx, 1*time.Second, "Database").Result()
+				//jsonDB, _ := client.BLPop(ctx, 1*time.Second, "Database").Result()
+				jsonDB, _ := client.BLPop(1*time.Second, "Database").Result()
 				if len(jsonDB) > 0 {
 					var data string
 					json.Unmarshal([]byte(jsonDB[1]), &data)
