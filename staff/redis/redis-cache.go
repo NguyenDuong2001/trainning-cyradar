@@ -4,11 +4,13 @@ import (
 	"Basic/Trainning4/redis/staff/model"
 	"encoding/json"
 	"fmt"
+	"log"
+	"os"
+
 	"github.com/go-redis/redis"
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
-	"log"
-	"os"
+
 	// "net"
 	"time"
 )
@@ -16,12 +18,11 @@ import (
 var Client *redis.Client = redis.NewClient(&redis.Options{
 	Addr: os.Getenv("REDIS_URL"),
 	// Addr:        net.JoinHostPort(os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PORT")),
+	// Password:    os.Getenv("REDIS_PASSWORD"),
 	Password:    os.Getenv("REDIS_PASSWORD"),
-	ReadTimeout: 7 * time.Second,
-	DialTimeout: 3 * time.Minute,
+	DB:          0,
 	PoolSize:    1000,
-	PoolTimeout: 100 * time.Second,
-	IdleTimeout: 100 * time.Second,
+	PoolTimeout: 10 * time.Second,
 })
 
 type redisCache struct {
@@ -83,7 +84,7 @@ func (cache *redisCache) SetStaff(key uuid.UUID, value model.Staff) {
 	//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	//defer cancel()
 	//err = client.Set(ctx, keyString, v, cache.expire*time.Second).Err()
-	err = client.Set(keyString, v, cache.expire*time.Second).Err()
+	err = client.Set(keyString, v, 10*time.Minute).Err()
 	if err != nil {
 		fmt.Println(err)
 	}

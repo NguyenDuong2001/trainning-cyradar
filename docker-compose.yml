@@ -1,12 +1,9 @@
-version: '3.8'
+version: "3.8"
 services:
   redis:
-    # image: redis:alpine
     image: redis:latest
     ports:
-      - 6379:6379
-    # expose:
-    #   - 6379
+      - 6378:6379
     volumes:
       - data:/data
     container_name: cache
@@ -20,7 +17,7 @@ services:
       - mongodb:/data/db
       - mongodb_config:/data/configdb
     ports:
-      - 2717:27017
+      - 2716:27017
     networks:
       - work
   staff:
@@ -37,11 +34,7 @@ services:
       - redis
     environment:
       URL_MongoDB: "mongodb://db:27017"
-      # REDIS_URL: cache:6379
       REDIS_URL: "cache:6379"
-      Redis_Host: cache:6379
-      REDIS_HOST: "cache"
-      REDIS_PORT: "6379"
       REDIS_PASSWORD: "1234"
       Port: "3333"
       PortTeam: "http://localhost:3334/"
@@ -53,8 +46,6 @@ services:
       - ./team:/app/team
     ports:
       - 3334:3334
-    # links:
-    #   - redis:redis
     depends_on:
       - redis
       - db
@@ -63,13 +54,9 @@ services:
       - redis
     environment:
       URL_MongoDB: "mongodb://db:27017"
-      # REDIS_URL: cache:6379
       REDIS_URL: "cache:6379"
-      Redis_Host: cache:6379
-      Port: "3334"
-      REDIS_HOST: "cache"
-      REDIS_PORT: "6379"
       REDIS_PASSWORD: "1234"
+      Port: "3334"
       PortStaff: "http://localhost:3333/"
     networks:
       - work
@@ -83,10 +70,14 @@ services:
     depends_on:
       - staff
       - team
+    environment:
+      VUE_APP_TEAM: http://10.3.145.14:3334/
+      VUE_APP_STAFF: http://10.3.145.14:3333/
     networks:
       - work
 networks:
   work:
+    name: work
 volumes:
   mongodb:
   mongodb_config:

@@ -9,19 +9,21 @@ import (
 	"Basic/Trainning4/redis/staff/redis"
 	"Basic/Trainning4/redis/staff/service"
 	"encoding/json"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/cors"
 
 	//"github.com/go-redis/redis/v8"
-	"github.com/google/uuid"
-	"github.com/joho/godotenv"
 	"log"
 	"math"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/joho/godotenv"
 )
 
 var DB config.Database = &mongodb.MongoDB{}
@@ -54,9 +56,9 @@ func main() {
 	c := cors.New(cors.Options{
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		// Enable Debugging for testing, consider disabling in production
-		AllowOriginFunc:  func(origin string) bool { return true },
-		Debug:          true,
-		AllowedHeaders: []string{"accept", "authorization", "content-type"},
+		AllowOriginFunc: func(origin string) bool { return true },
+		Debug:           true,
+		AllowedHeaders:  []string{"accept", "authorization", "content-type"},
 	})
 	handler := c.Handler(routeStaff)
 
@@ -71,8 +73,8 @@ var client = redis.NewRedisCache(os.Getenv("Redis_Host"), 0, 10).GetClient()
 
 func run() {
 	DB.NewDB()
-	for range time.Tick(500 * time.Microsecond) {
-		go func() {
+	go func() {
+		for {
 			//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			//defer cancel()
 			//jsonData, _ := client.BLPop(ctx, 1*time.Second, "Team_Staff").Result()
@@ -138,8 +140,8 @@ func run() {
 				//	client.RPush(ctx,"ReturnManyStaff", d)
 				//}
 			}
-		}()
-	}
+		}
+	}()
 }
 
 func getDB(w http.ResponseWriter, r *http.Request) {

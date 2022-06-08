@@ -6,17 +6,19 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+
 	//"github.com/go-redis/redis/v8"
+	"log"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
-	"log"
-	"time"
 )
 
 var client = redis.NewRedisCache(os.Getenv("Redis_Host"), 0, 10).GetClient()
 
-func (DB *MongoDB) FindStaff(toEdit bool)[]model.StaffInter {
+func (DB *MongoDB) FindStaff(toEdit bool) []model.StaffInter {
 	var staffs []model.StaffInter
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -162,11 +164,11 @@ func GetNameTeams(teams []uuid.UUID) []string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	for range time.Tick(500 * time.Microsecond) {
+	for {
 		//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		//defer cancel()
 		//jsonD, _ := client.BLPop(ctx, 5*time.Second, "ReturnNameTeam").Result()
-		jsonD, _ := client.BLPop(5*time.Second, "ReturnNameTeam").Result()
+		jsonD, _ := client.BLPop(1*time.Second, "ReturnNameTeam").Result()
 
 		// log.Print(client)
 		// if err != nil {

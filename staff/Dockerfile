@@ -14,8 +14,6 @@ COPY go.sum ./
 
 RUN go mod download -x
 COPY . ./
-
-
 RUN go build -o /bin/staff
 
 FROM alpine:3.15.0

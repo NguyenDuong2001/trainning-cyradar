@@ -9,17 +9,19 @@ import (
 	"Basic/Trainning4/redis/team/redis"
 	"Basic/Trainning4/redis/team/service"
 	"encoding/json"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/cors"
 
 	//"github.com/go-redis/redis/v8"
-	"github.com/google/uuid"
-	"github.com/joho/godotenv"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -43,9 +45,9 @@ func main() {
 		})
 	})
 	c := cors.New(cors.Options{
-		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders: []string{"*"},
-		AllowOriginFunc:  func(origin string) bool { return true },
+		AllowedMethods:  []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:  []string{"*"},
+		AllowOriginFunc: func(origin string) bool { return true },
 		// Enable Debugging for testing, consider disabling in production
 		Debug: true,
 	})
@@ -57,13 +59,12 @@ func main() {
 
 var client = redis.NewRedisCache(os.Getenv("Redis_Host"), 0, 10).GetClient()
 
-
 var DB config.Database = &mongodb.MongoDB{}
 
 func run() {
 	DB.NewDB()
-	for range time.Tick(500 * time.Microsecond) {
-		go func() {
+	go func() {
+		for {
 			//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			//defer cancel()
 			//jsonData, _ := client.BLPop(ctx, 5*time.Second, "Staff_Team").Result()
@@ -151,8 +152,8 @@ func run() {
 				//	}
 				//}
 			}
-		}()
-	}
+		}
+	}()
 }
 
 func getDB(w http.ResponseWriter, r *http.Request) {
@@ -243,7 +244,7 @@ func CreateTeam(w http.ResponseWriter, r *http.Request) {
 		ID:   uuid.New(),
 		Name: name,
 	}
-	if len(memberStrings) >= 1 && len(memberStrings[0])>0 {
+	if len(memberStrings) >= 1 && len(memberStrings[0]) > 0 {
 		for _, m := range memberStrings {
 			member, err := uuid.Parse(m)
 			if err != nil {
@@ -295,7 +296,7 @@ func UpdateTeam(w http.ResponseWriter, r *http.Request) {
 	idQuery := r.URL.Query().Get("id")
 	r.FormValue("members")
 	memberStrings := r.Form["members"]
-	if len(memberStrings) == 0 && len(memberStrings[0])==0{
+	if len(memberStrings) == 0 && len(memberStrings[0]) == 0 {
 		w.WriteHeader(404)
 		w.Write([]byte("Team not empty"))
 		return

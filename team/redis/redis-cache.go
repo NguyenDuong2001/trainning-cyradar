@@ -4,12 +4,13 @@ import (
 	"Basic/Trainning4/redis/team/model"
 	"encoding/json"
 	"fmt"
-	"github.com/go-redis/redis"
-	"github.com/google/uuid"
-	"github.com/joho/godotenv"
 	"log"
 	"os"
 	"time"
+
+	"github.com/go-redis/redis"
+	"github.com/google/uuid"
+	"github.com/joho/godotenv"
 	// "net"
 )
 
@@ -18,18 +19,16 @@ type redisCache struct {
 	db     int
 	expire time.Duration
 }
+
 // net.JoinHostPort(os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PORT"))
 var Client *redis.Client = redis.NewClient(&redis.Options{
 	// Addr:        os.Getenv("Redis_Host"),
-	Addr:        os.Getenv("REDIS_URL"),
+	Addr: os.Getenv("REDIS_URL"),
 	// Addr:        net.JoinHostPort(os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PORT")),
 	Password:    os.Getenv("REDIS_PASSWORD"),
 	DB:          0,
-	ReadTimeout: 7 * time.Second,
-	DialTimeout: 3 * time.Minute,
 	PoolSize:    1000,
-	PoolTimeout: 100 * time.Second,
-	IdleTimeout: 100*time.Second,
+	PoolTimeout: 10 * time.Second,
 })
 
 type PostCache interface {
@@ -53,19 +52,11 @@ func (cache *redisCache) GetClient() *redis.Client {
 	if e != nil {
 		log.Fatal(e)
 	}
-	log.Print(Client)
-	fmt.Println("Client", Client)
-	fmt.Println(os.Getenv("Redis_Host"))
-	fmt.Println(os.Getenv("URL_MongoDB"))
-
-	//ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
-	//defer cancel()
-	//pong, err := Client.Ping(ctx).Result()
 	pong, err := Client.Ping().Result()
 
-	fmt.Println(err)
+	fmt.Println(pong)
 	if err != nil {
-		fmt.Println("Error get client")
+		fmt.Println("Error get client team")
 		log.Fatal(err)
 	}
 	log.Println(pong)
@@ -90,7 +81,8 @@ func (cache *redisCache) CreateClient() {
 
 func (cache *redisCache) DelStaff(key uuid.UUID) {
 	fmt.Println("delstaff 1")
-	client := cache.GetClient()
+	// client := cache.GetClient()
+	client := Client
 	fmt.Println("delstaff 2", client != nil)
 
 	keyString := key.String()
@@ -118,7 +110,7 @@ func (cache *redisCache) SetTeam(key uuid.UUID, value model.TeamInter) {
 	//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	//defer cancel()
 	//err := client.Set(ctx, keyString, v, cache.expire*time.Second).Err()
-	err := client.Set(keyString, v, cache.expire*time.Second).Err()
+	err := client.Set(keyString, v, 10*time.Minute).Err()
 	fmt.Println("setstaff 4", err)
 
 }
@@ -126,7 +118,9 @@ func (cache *redisCache) SetTeam(key uuid.UUID, value model.TeamInter) {
 func (cache *redisCache) GetTeam(key uuid.UUID) model.TeamInter {
 	fmt.Println("getteam 1")
 
-	client := cache.GetClient()
+	// client := cache.GetClient()
+	client := Client
+
 	fmt.Println("getteam 2", client != nil)
 
 	fmt.Println("getteam 3")
